@@ -63,11 +63,36 @@ foreach ($events['events'] as $event) {
                                " » 𝐮\n" .
                                " » 𝐫𝐧𝐚𝐦𝐞\n" .
                                " » 𝐬𝐞𝐭𝐚𝐝𝐦𝐢𝐧\n" .
-                               " » 𝐝𝐞𝐥𝐚𝐝𝐦𝐢𝐧\n" .
+                               " » 𝐝e𝐥𝐚𝐝𝐦𝐢𝐧\n" .
                                " » 𝐡𝐞𝐥𝐩";
                 break;
 
             case 'setadmin':
+                if (!in_array($userId, $admin_list)) {
+                    $responseText = "❌ 𝐍𝐨𝐭 𝐀𝐮𝐭𝐡𝐨𝐫𝐢𝐳𝐞𝐝: 𝐎𝐧𝐥𝐲 𝐀𝐝𝐦𝐢𝐧𝐬 𝐜𝐚𝐧 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐜𝐨𝐦𝐦𝐚𝐧𝐝.";
+                    break;
+                }
+
+                // سحب معرّف المستخدم المضمون من مصفوفة منشن LINE
+                $targetUser = "";
+                if (isset($event['message']['mention']['mentions'][0]['userId'])) {
+                    $targetUser = $event['message']['mention']['mentions'][0]['userId'];
+                }
+
+                if (!empty($targetUser)) {
+                    if (!in_array($targetUser, $admin_list)) {
+                        $admin_list[] = $targetUser;
+                        file_put_contents($admin_file, implode(',', $admin_list));
+                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐑 𝐀𝐒 𝐀𝐃𝐌class_𝐈𝐍";
+                    } else {
+                        $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
+                    }
+                } else {
+                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐬𝐞𝐭𝐚𝐝𝐦𝐢𝐧 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
+                }
+                break;
+
+            case 'deladmin':
                 if (!in_array($userId, $admin_list)) {
                     $responseText = "❌ 𝐍𝐨𝐭 𝐀𝐮𝐭𝐡𝐨𝐫𝐢𝐳𝐞𝐝: 𝐎𝐧𝐥𝐲 𝐀𝐝𝐦𝐢𝐧𝐬 𝐜𝐚𝐧 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐜𝐨𝐦𝐦𝐚𝐧𝐝.";
                     break;
@@ -79,44 +104,20 @@ foreach ($events['events'] as $event) {
                 }
 
                 if (!empty($targetUser)) {
-                    if (!in_array($targetUser, $admin_list)) {
-                        $admin_list[] = $targetUser;
-                        file_put_contents($admin_file, implode(',', $admin_list));
-                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐑 𝐀𝐒 𝐀doc_𝐀𝐃𝐌class_𝐈𝐍";
-                    } else {
-                        $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
-                    }
-                } else {
-                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐬𝐞𝐭𝐚𝐝𝐦𝐢𝐧 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
-                }
-                break;
-
-            case 'deladmin':
-                if (!in_array($userId, $admin_list)) {
-                    $responseText = "❌ 𝐍𝐨𝐭 𝐀𝐮𝐭хориized: 𝐎𝐧𝐥𝐲 𝐀𝐝𝐦𝐢𝐧𝐬 𝐜𝐚𝐧 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐜𝐨𝐦𝐦𝐚𝐧𝐝.";
-                    break;
-                }
-
-                $targetUser = "";
-                if (isset($event['message']['mention']['mentions'][0]['userId'])) {
-                    $targetUser = $event['message']['mention']['mentions'][0]['userId'];
-                }
-
-                if (!empty($targetUser)) {
                     if ($targetUser === $userId) {
-                        $responseText = "❌ 𝐘𝐨𝐮 𝐜𝐚𝐧𝐧𝐨𝐭 𝐫e𝐦o𝐯e 𝐲o𝐮𝐫𝐬e𝐥𝐟 f𝐫o𝐦 𝐚𝐝𝐦𝐢𝐧 𝐥𝐢𝐬𝐭.";
+                        $responseText = "❌ 𝐘𝐨𝐮 𝐜𝐚𝐧𝐧𝐨𝐭 𝐫𝐞𝐦𝐨𝐯𝐞 𝐲𝐨𝐮𝐫𝐬𝐞𝐥ф 𝐟𝐫𝐨𝐦 𝐚𝐝𝐦𝐢𝐧 𝐥𝐢𝐬𝐭.";
                         break;
                     }
 
                     if (($key = array_search($targetUser, $admin_list)) !== false) {
                         unset($admin_list[$key]);
                         file_put_contents($admin_file, implode(',', $admin_list));
-                        $responseText = "🗑️ 𝐃𝐎𝐍𝐄 𝐑𝐄𝐌class_𝐎𝐕𝐄𝐃 𝐓𝐇𝐈𝐒 𝐔𝐒class_𝐄𝐑 𝐅𝐑𝐎𝐌 𝐀𝐃𝐌𝐈class_𝐍𝐒";
+                        $responseText = "🗑️ 𝐃𝐎𝐍𝐄 𝐑𝐄𝐌class_𝐎𝐕𝐄𝐃 𝐓𝐇𝐈𝐒 𝐔𝐒class_𝐄𝐑 𝐅𝐑𝐎𝐌 𝐀𝐃𝐌class_𝐍𝐒";
                     } else {
                         $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐧𝐨𝐭 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
                     }
                 } else {
-                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐝e𝐥𝐚𝐝𝐦𝐢𝐧 @𝐌e𝐧𝐭𝐢o𝐧";
+                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐝𝐞class_𝐥𝐚𝐝𝐦class_𝐢𝐧 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
                 }
                 break;
 
@@ -128,7 +129,7 @@ foreach ($events['events'] as $event) {
                 $current_bans = trim(file_get_contents($ban_file));
                 $deleted_count = empty($current_bans) ? 0 : count(explode(',', $current_bans));
                 file_put_contents($ban_file, ""); 
-                $responseText = "𝐃𝐎𝐍𝐄 𝐂𝐋class_𝐄𝐀𝐑 " . $deleted_count . " 𝐔𝐒𝐄𝐑'𝐒 𝐅𝐑𝐎𝐌 𝐁class_𝐀𝐍.";
+                $responseText = "𝐃𝐎𝐍𝐄 𝐂𝐋class_𝐄𝐀Ｒ " . $deleted_count . " 𝐔𝐒class_𝐄𝐑'𝐒 𝐅𝐑𝐎𝐌 𝐁class_𝐀𝐍.";
                 break;
 
             case 'u':
@@ -138,24 +139,22 @@ foreach ($events['events'] as $event) {
                 }
 
                 if (in_array($checkUser, $admin_list)) {
-                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀𝐃𝐌class_𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
+                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀class_𝐀𝐃𝐌class_𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
                 } else {
-                    $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐌𝐞𝐦𝐛𝐞𝐫 / 𝐍𝐨𝐭 𝐁class_𝐚𝐧𝐧𝐞𝐝.";
+                    $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐌𝐞𝐦𝐛class_𝐞𝐫 / 𝐍𝐨𝐭 𝐁class_𝐚𝐧𝐧class_𝐞𝐝.";
                 }
                 break;
 
             case 'rname':
                 if (!in_array($userId, $admin_list)) {
-                    $responseText = "❌ 𝐀𝐜𝐜class_𝐞𝐬𝐬 𝐃𝐞𝐧𝐢𝐞𝐝.";
+                    $responseText = "❌ 𝐀𝐜𝐜class_𝐞𝐬𝐬 𝐃𝐞class_𝐧𝐢𝐞𝐝.";
                     break;
                 }
-                // سحب الاسم المكتوب بعد الأمر
                 $newName = trim(preg_replace('/^\.?rname/i', '', $userMessage));
                 
-                // ذكي: لو كُتب الأمر بدون اسم جديد، يطبع الاسم الحالي للبوت
                 if (!empty($newName)) {
                     file_put_contents($name_file, $newName);
-                    $responseText = "⚙️ 𝐁𝐨𝐭 𝐧class_𝐚𝐦𝐞 𝐜𝐡class_𝐚𝐧𝐠𝐞𝐝 𝐭𝐨: " . $newName;
+                    $responseText = "⚙️ 𝐁𝐨𝐭 𝐧class_𝐚𝐦class_𝐞 𝐜𝐡class_𝐚𝐧𝐠class_𝐞𝐝 𝐭𝐨: " . $newName;
                 } else {
                     $current_name = file_get_contents($name_file);
                     $responseText = "🤖 𝐁𝐨𝐭 𝐂𝐮𝐫𝐫class_𝐞𝐧𝐭 𝐍class_𝐚𝐦class_𝐞: " . $current_name;
@@ -165,9 +164,9 @@ foreach ($events['events'] as $event) {
             case 'kickbans':
                 $current_bans = trim(file_get_contents($ban_file));
                 if (empty($current_bans)) {
-                    $responseText = " can_𝐍𝐨 𝐛class_𝐚𝐧𝐧𝐞𝐝 𝐮𝐬class_𝐞𝐫𝐬 𝐭𝐨 𝐤𝐢𝐜𝐤.";
+                    $responseText = " can_ can_ can_𝐍𝐨 𝐛class_𝐚𝐧𝐧class_𝐞𝐝 𝐮𝐬class_𝐞𝐫𝐬 𝐭𝐨 𝐤class_𝐢𝐜𝐤.";
                 } else {
-                    $responseText = "𝐒𝐭class_𝐚𝐫𝐭𝐢𝐧𝐠 𝐤𝐢𝐜𝐤𝐛class_𝐚𝐧𝐬 𝐩𝐫𝐨𝐜class_𝐞𝐬𝐬...";
+                    $responseText = "𝐒𝐭class_𝐚𝐫𝐭class_𝐢𝐧𝐠 𝐤class_𝐢𝐜𝐤𝐛class_𝐚𝐧𝐬 𝐩𝐫𝐨𝐜class_class_𝐞𝐬𝐬...";
                 }
                 break;
 
