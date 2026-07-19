@@ -35,7 +35,7 @@ foreach ($events['events'] as $event) {
             file_put_contents($admin_file, $userId);
         }
 
-        // تنظيف وفحص الأمر (بنقطة أو بدون نقطة، كابيتال أو سمول)
+        // تنظيف وفحص الأمر
         $lowerMessage = mb_strtolower($userMessage, 'UTF-8');
         $cleanCommand = ltrim($lowerMessage, '.');
 
@@ -56,7 +56,7 @@ foreach ($events['events'] as $event) {
                                " » 𝐮\n" .
                                " » 𝐫𝐧𝐚𝐦𝐞\n" .
                                " » 𝐬𝐞𝐭𝐚𝐝𝐦𝐢𝐧\n" .
-                               " » 𝐝e𝐥𝐚𝐝𝐦𝐢𝐧\n" .
+                               " » 𝐝𝐞𝐥𝐚𝐝𝐦𝐢𝐧\n" .
                                " » 𝐡𝐞𝐥𝐩";
                 break;
 
@@ -75,12 +75,12 @@ foreach ($events['events'] as $event) {
                     if (!in_array($targetUser, $admin_list)) {
                         $admin_list[] = $targetUser;
                         file_put_contents($admin_file, implode(',', $admin_list));
-                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇block_𝐈𝐒 𝐔𝐒block_𝐄block_𝐑 𝐀𝐒 𝐀block_𝐃𝐌𝐈𝐍";
+                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒block_𝐄𝐑 𝐀𝐒 𝐀block_𝐃𝐌𝐈𝐍";
                     } else {
-                        $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐚𝐧 𝐚𝐝𝐦𝐢ｎ.";
+                        $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
                     }
                 } else {
-                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐬𝐞𝐭𝐚𝐝𝐦𝐢𝐧 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
+                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐬e𝐭𝐚𝐝𝐦𝐢𝐧 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
                 }
                 break;
 
@@ -99,7 +99,7 @@ foreach ($events['events'] as $event) {
                     if (($key = array_search($targetUser, $admin_list)) !== false) {
                         unset($admin_list[$key]);
                         file_put_contents($admin_file, implode(',', $admin_list));
-                        $responseText = "🗑️ 𝐃block_𝐎block_𝐍block_𝐄 𝐑block_𝐄block_𝐌block_𝐎block_𝐕block_𝐄block_𝐃";
+                        $responseText = "🗑️ 𝐃𝐎𝐍𝐄 𝐑𝐄𝐌𝐎𝐕𝐄𝐃";
                     }
                 } else {
                     $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐝𝐞𝐥𝐚𝐝𝐦𝐢𝐧 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
@@ -108,11 +108,11 @@ foreach ($events['events'] as $event) {
 
             case 'kick':
                 if (!in_array($userId, $admin_list)) {
-                    $responseText = "❌ 𝐉𝐀block_𝐊block_𝐄block_𝐋  𝐉𝐀block_𝐁block_𝐇block_𝐀: 𝐘𝐨𝐮 𝐚𝐫𝐞 𝐧𝐨𝐭 𝐚𝐧 𝐀𝐝𝐦𝐢𝐧!";
+                    $responseText = "❌ Access Denied: You are not an Admin!";
                     break;
                 }
 
-                // قراءة ذكية وشاملة لكل المصفوفة للتأكد من صيد الـ userId
+                // سحب التارجت بشكل نظيف من الـ Array بدون تعقيد
                 $targetUser = "";
                 if (isset($event['message']['mention']['mentions']) && is_array($event['message']['mention']['mentions'])) {
                     foreach ($event['message']['mention']['mentions'] as $mention) {
@@ -125,11 +125,11 @@ foreach ($events['events'] as $event) {
 
                 if (!empty($targetUser)) {
                     if (in_array($targetUser, $admin_list)) {
-                        $responseText = "🛡️ 𝐘𝐨𝐮 𝐜𝐚𝐧𝐧𝐨𝐭 𝐤𝐢𝐜𝐤 𝐚𝐧original_𝐀𝐝𝐦𝐢𝐧.";
+                        $responseText = "🛡️ 𝐘𝐨𝐮 𝐜𝐚𝐧𝐧𝐨𝐭 𝐤𝐢𝐜𝐤 𝐚𝐧 𝐀𝐝𝐦𝐢𝐧.";
                         break;
                     }
 
-                    // تنفيذ الطرد المباشر
+                    // طرد
                     $kickUrl = "https://api.line.me/v2/bot/group/{$chatId}/member/{$targetUser}/kick";
                     if (isset($event['source']['roomId'])) {
                         $kickUrl = "https://api.line.me/v2/bot/room/{$chatId}/member/{$targetUser}/kick";
@@ -142,10 +142,9 @@ foreach ($events['events'] as $event) {
                     curl_exec($kickCh);
                     curl_close($kickCh);
 
-                    $responseText = "⚡ 𝐃𝐎𝐍𝐄 𝐊block_𝐈block_𝐂block_𝐊block_𝐄block_𝐃 𝐓block_𝐇block_𝐈𝐒 𝐌block_𝐄block_𝐌𝐁 block_𝐄block_block_𝐑";
+                    $responseText = "⚡ 𝐃𝐎block_𝐍block_𝐄 𝐊block_𝐈block_𝐂block_block_𝐊block_𝐄block_𝐃";
                 } else {
-                    // إذا فشل في صيد المنشن بسبب طريقة إرسال LINE، رح نخليه يطبع الرسالة للتأكد
-                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐤𝐢𝐜𝐤 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
+                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐤𝐢𝐜𝐤 @<b>𝐌𝐞𝐧𝐭𝐢𝐨𝐧</b>";
                 }
                 break;
 
@@ -158,9 +157,9 @@ foreach ($events['events'] as $event) {
                 }
                 $checkUser = !empty($targetUser) ? $targetUser : $userId;
                 if (in_array($checkUser, $admin_list)) {
-                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀𝐃𝐌block_block_𝐈𝐍";
+                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀class_𝐃class_𝐌𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
                 } else {
-                    $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐌𝐞𝐦𝐛er";
+                    $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐌𝐞𝐦𝐛𝐞𝐫.";
                 }
                 break;
 
@@ -169,10 +168,10 @@ foreach ($events['events'] as $event) {
                 $newName = trim(preg_replace('/^\.?rname/i', '', $userMessage));
                 if (!empty($newName)) {
                     file_put_contents($name_file, $newName);
-                    $responseText = "⚙️ 𝐁block_𝐨𝐭 𝐧block_𝐚𝐦block_𝐞 𝐜𝐡block_𝐚𝐧𝐠block_𝐞𝐝.";
+                    $responseText = "⚙️ Bot name changed.";
                 } else {
                     $current_name = file_get_contents($name_file);
-                    $responseText = "🤖 𝐁block_𝐨𝐭 𝐂block_𝐮𝐫block_𝐫block_𝐞𝐧block_𝐭 𝐍block_𝐚𝐦block_𝐞: " . $current_name;
+                    $responseText = "🤖 Bot Current Name: " . $current_name;
                 }
                 break;
 
