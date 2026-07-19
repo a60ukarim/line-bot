@@ -25,21 +25,30 @@ foreach ($events['events'] as $event) {
     if ($event['type'] == 'message' && $event['message']['type'] == 'text') {
         
         $replyToken = $event['replyToken'];
-        $userId = $event['source']['userId']; // الـ ID تبعك أو تبع الشخص اللي أرسل
+        $userId = $event['source']['userId']; 
         $userMessage = trim($event['message']['text']);
         $responseText = "";
 
-        // تحويل الأحرف وتنظيف الرسالة
+        // تنظيف الرسالة وتحويلها لأحرف صغيرة للفحص
         $lowerMessage = mb_strtolower($userMessage, 'UTF-8');
         $cleanCommand = ltrim($lowerMessage, '.');
-        $msgParts = explode(' ', $cleanCommand);
-        $baseCommand = trim($msgParts[0]);
 
-        // قراءة قائمة المشرفين (الأدمنز) الحالية
+        // تحديد الأمر بناءً على بداية الكلمة
+        $baseCommand = "";
+        if (strpos($cleanCommand, 'help') === 0) $baseCommand = 'help';
+        elseif (strpos($cleanCommand, 'setadmin') === 0) $baseCommand = 'setadmin';
+        elseif (strpos($cleanCommand, 'kickbans') === 0) $baseCommand = 'kickbans';
+        elseif (strpos($cleanCommand, 'rname') === 0) $baseCommand = 'rname';
+        elseif (strpos($cleanCommand, 'sname') === 0) $baseCommand = 'sname';
+        elseif (strpos($cleanCommand, 'c') === 0) $baseCommand = 'c';
+        elseif (strpos($cleanCommand, 'u') === 0) $baseCommand = 'u';
+        elseif ($userMessage === '.') $baseCommand = 'dot';
+
+        // قراءة قائمة المشرفين
         $current_admins = file_get_contents($admin_file);
         $admin_list = !empty($current_admins) ? explode(',', $current_admins) : [];
 
-        // تنفيذي: لو الملف فاضي، نعتبر أول شخص يرسل أمر هو الأدمن الأساسي (Owner) وتثبيته فوراً
+        // إذا كان الملف فارغاً، تعيين أول مستخدم كأدمن أساسي تلقائياً
         if (empty($admin_list)) {
             $admin_list[] = $userId;
             file_put_contents($admin_file, $userId);
@@ -59,34 +68,33 @@ foreach ($events['events'] as $event) {
                 break;
 
             case 'setadmin':
-                // التحقق الحقيقي: هل أنت أدمن عشان تعطي صلاحية لغيرك؟
+                // التحقق من صلاحية المستخدم الحالي
                 if (!in_array($userId, $admin_list)) {
                     $responseText = "❌ 𝐍𝐨𝐭 𝐀𝐮𝐭𝐡𝐨𝐫𝐢𝐳𝐞𝐝: 𝐎𝐧𝐥𝐲 𝐀𝐝𝐦𝐢𝐧𝐬 𝐜𝐚𝐧 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐜𝐨𝐦𝐦𝐚𝐧𝐝.";
                     break;
                 }
 
+                // سحب الـ User ID للشخص الممشن بشكل مرن وآمن
                 $targetUser = "";
-                // سحب الـ User ID الحقيقي للشخص الممشن من نظام LINE
-                if (isset($event['message']['mention']['mentions'][0])) {
-                    $targetUser = $event['message']['mention']['mentions'][0]['userId'];
-                } 
-                // أو إذا مسوي Reply
-                elseif (isset($event['message']['quotedMessageId'])) {
-                    // في بيئة LINE، الـ Webhook يرسل تفاصيل المقبس لو تم التعديل عليها، هنا نعتمد المنشن كخيار أساسي
-                    $responseText = "⚠️ 𝐏𝐥𝐞𝐚𝐬𝐞 𝐦𝐞𝐧𝐭𝐢𝐨𝐧 𝐭𝐡𝐞 𝐮𝐬𝐞𝐫 𝐝𝐢𝐫𝐞𝐜𝐭𝐥𝐲.";
-                    break;
+                if (isset($event['message']['mention']['mentions']) && is_array($event['message']['mention']['mentions'])) {
+                    foreach ($event['message']['mention']['mentions'] as $mention) {
+                        if (isset($mention['userId'])) {
+                            $targetUser = $mention['userId'];
+                            break; // نأخذ أول منشن صح
+                        }
+                    }
                 }
 
                 if (!empty($targetUser)) {
                     if (!in_array($targetUser, $admin_list)) {
                         $admin_list[] = $targetUser;
                         file_put_contents($admin_file, implode(',', $admin_list));
-                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐫 𝐀𝐒 𝐀𝐃𝐌𝐈𝐍";
+                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐑 𝐀𝐒 𝐀𝐃𝐌𝐈𝐍";
                     } else {
                         $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
                     }
                 } else {
-                    $responseText = "𝐔𝐬𝐚𝐠𝐞: .𝐬𝐞𝐭𝐚𝐦𝐢𝐧 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
+                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐬𝐞𝐭𝐚𝐝𝐦𝐢𝐧 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
                 }
                 break;
 
@@ -102,14 +110,18 @@ foreach ($events['events'] as $event) {
                 break;
 
             case 'u':
-                // فحص رتبة الحساب وحالته تنفذياً
                 $checkUser = $userId;
-                if (isset($event['message']['mention']['mentions'][0])) {
-                    $checkUser = $event['message']['mention']['mentions'][0]['userId'];
+                if (isset($event['message']['mention']['mentions']) && is_array($event['message']['mention']['mentions'])) {
+                    foreach ($event['message']['mention']['mentions'] as $mention) {
+                        if (isset($mention['userId'])) {
+                            $checkUser = $mention['userId'];
+                            break;
+                        }
+                    }
                 }
 
                 if (in_array($checkUser, $admin_list)) {
-                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀𝐃𝐌𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
+                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀class_𝐀𝐃𝐌class_𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
                 } else {
                     $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐌𝐞𝐦𝐛𝐞𝐫 / 𝐍𝐨𝐭 𝐁𝐚𝐧𝐧𝐞𝐝.";
                 }
@@ -120,21 +132,31 @@ foreach ($events['events'] as $event) {
                 $responseText = "𝐁𝐨𝐭 𝐂𝐮𝐫𝐫𝐞𝐧𝐭 𝐍𝐚𝐦𝐞: " . $current_name;
                 break;
 
-            default:
-                // تنفيذ أمر rname الفعلي لتغيير الاسم بالكامل
-                if ($baseCommand === 'rname') {
-                    if (!in_array($userId, $admin_list)) {
-                        $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃𝐞𝐧𝐢𝐞𝐝.";
-                        break;
-                    }
-                    $rawParts = explode(' ', trim($userMessage));
-                    if (count($rawParts) > 1) {
-                        array_shift($rawParts);
-                        $newName = implode(' ', $rawParts);
-                        file_put_contents($name_file, $newName);
-                        $responseText = "⚙️ 𝐁𝐨𝐭 𝐧𝐚𝐦𝐞 𝐜𝐡𝐚𝐧𝐠𝐞𝐝 𝐭𝐨: " . $newName;
-                    }
+            case 'rname':
+                if (!in_array($userId, $admin_list)) {
+                    $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃니ed.";
+                    break;
                 }
+                $newName = trim(preg_replace('/^\.?rname/i', '', $userMessage));
+                if (!empty($newName)) {
+                    file_put_contents($name_file, $newName);
+                    $responseText = "⚙️ 𝐁𝐨𝐭 𝐧𝐚𝐦𝐞 𝐜𝐡𝐚𝐧𝐠𝐞𝐝 𝐭𝐨: " . $newName;
+                } else {
+                    $responseText = "𝐔𝐬𝐚𝐠𝐞: .𝐫𝐧𝐚𝐦𝐞 [𝐍𝐞𝐰 𝐍𝐚𝐦𝐞]";
+                }
+                break;
+
+            case 'kickbans':
+                $current_bans = trim(file_get_contents($ban_file));
+                if (empty($current_bans)) {
+                    $responseText = "𝐍𝐨 𝐛𝐚𝐧𝐧𝐞𝐝 𝐮𝐬𝐞𝐫𝐬 𝐭𝐨 𝐤𝐢𝐜𝐤.";
+                } else {
+                    $responseText = "𝐒𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐤𝐢𝐜𝐤𝐛𝐚𝐧𝐬 𝐩𝐫𝐨𝐜𝐞𝐬𝐬...";
+                }
+                break;
+
+            case 'dot':
+                $responseText = "الشاي مشروب العظماء ☕";
                 break;
         }
 
