@@ -8,15 +8,16 @@ $content = file_get_contents('php://input');
 $events = json_decode($content, true);
 
 if (is_null($events['events'])) {
-    echo "OK - API Backend is running.";
+    echo "OK";
     exit();
 }
 
-// ملف محلي لتخزين الحظر
+// ملفات محاكاة البيانات لتشغيل الأوامر حقيقي
 $ban_file = '/tmp/banned_users.txt';
-if (!file_exists($ban_file)) {
-    file_put_contents($ban_file, "");
-}
+$name_file = '/tmp/bot_name.txt';
+
+if (!file_exists($ban_file)) file_put_contents($ban_file, "");
+if (!file_exists($name_file)) file_put_contents($name_file, "majles-alhabd-bot");
 
 foreach ($events['events'] as $event) {
     if ($event['type'] == 'message' && $event['message']['type'] == 'text') {
@@ -25,60 +26,74 @@ foreach ($events['events'] as $event) {
         $userMessage = trim($event['message']['text']);
         $responseText = "";
 
-        // 3. Functional Command Handler
-        switch (strtolower($userMessage)) {
-            case '.':
-                $responseText = "الشاي مشروب العظماء ☕";
+        // معالجة الأوامر (يدعم ككتابة عادية أو بنقطة)
+        $cleanCommand = ltrim(strtolower($userMessage), '.');
+
+        switch ($cleanCommand) {
+            // 1. أمر عرض القائمة بنفس التنسيق والخط الفخم
+            case 'help':
+                $responseText = "◈ 𝐌𝐞𝐧𝐮 𝐇𝐞𝐥𝐩 ◈\n\n" .
+                               "𝐆𝐚𝐝𝐦𝐢𝐧:\n\n" .
+                               " » 𝐜\n" .
+                               " » 𝐤𝐢𝐜𝐤𝐛𝐚𝐧𝐬\n" .
+                               " » 𝐮\n" .
+                               " » 𝐫𝐧𝐚𝐦𝐞\n" .
+                               " » 𝐬𝐧𝐚𝐦𝐞\n" .
+                               " » 𝐡𝐞𝐥𝐩";
                 break;
 
-            case '.c':
+            // 2. أمر تنظيف قائمة الحظر (برمجة حقيقية)
+            case 'c':
+                $current_bans = trim(file_get_contents($ban_file));
+                $deleted_count = empty($current_bans) ? 0 : count(explode(',', $current_bans));
+                file_put_contents($ban_file, ""); // تصفير
+                $responseText = "𝐃𝐎𝐍𝐄 𝐂𝐋𝐄𝐀𝐑 " . $deleted_count . " 𝐔𝐒𝐄𝐑'𝐒 𝐅𝐑𝐎𝐌 𝐁𝐀𝐍.";
+                break;
+
+            // 3. أمر طرد المحظورين (Kickbans)
+            case 'kickbans':
                 $current_bans = trim(file_get_contents($ban_file));
                 if (empty($current_bans)) {
-                    $deleted_count = 0;
+                    $responseText = "𝐍𝐨 𝐛𝐚𝐧𝐧𝐞𝐝 𝐮𝐬𝐞𝐫𝐬 𝐭𝐨 𝐤𝐢𝐜𝐤.";
                 } else {
-                    $banned_array = explode(',', $current_bans);
-                    $deleted_count = count($banned_array);
+                    $responseText = "𝐒𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐤𝐢𝐜𝐤𝐛𝐚𝐧𝐬 𝐩𝐫𝐨𝐜𝐞𝐬𝐬...";
                 }
-                file_put_contents($ban_file, "");
-                $responseText = "DONE CLEAR " . $deleted_count . " USERS FROM BAN.";
-                break;
-                
-            // القائمة الفخمة الجديدة بخط Unicode مزخرف ومميز
-            case '.help':
-                $responseText = "╭━━━  𝔖𝔜𝔖𝔗𝔈𝔐 ℭ𝔒𝔐𝔐𝔒𝔑𝔇𝔖  ━━━╮\n\n" .
-                               " 📌  [ .help ]\n" .
-                               " ╰─▸ 𝘚𝘩𝘰𝘸 𝘵𝘩𝘪𝘴 𝘱𝘳𝘦𝘮𝘪𝘶𝘮 𝘮𝘦𝘯𝘶.\n\n" .
-                               " ⚡  [ .status ]\n" .
-                               " ╰─▸ 𝘊𝘩𝘦𝘤𝘬 𝘳𝘦𝘢𝘭-𝘵𝘪𝘮𝘦 𝘴𝘺𝘴𝘵𝘦𝘮 𝘩𝘦𝘢𝘭𝘵𝘩.\n\n" .
-                               " 📡  [ .ping ]\n" .
-                               " ╰─▸ 𝘛𝘦𝘴𝘵 𝘭𝘢𝘵𝘦𝘯𝘤𝘺 & 𝘳𝘦𝘴𝘱𝘰𝘯𝘴𝘪𝘷𝘦𝘯𝘦𝘴𝘴.\n\n" .
-                               " 🛡️  [ .c ]\n" .
-                               " ╰─▸ 𝘞𝘪𝘱𝘦 𝘢𝘭𝘭 𝘣𝘢𝘯𝘯𝘦𝘥 𝘶𝘴𝘦𝘳𝘴 𝘪𝘯𝘴𝘵𝘢𝘯𝘵𝘭𝘺.\n\n" .
-                               " ☕  [ . ]\n" .
-                               " ╰─▸ 𝘛𝘩𝘦 𝘭𝘦𝘨𝘦𝘯𝘥𝘢𝘳𝘺 𝘥𝘰𝘵 𝘴𝘩𝘰𝘳𝘵𝘤𝘶𝘵.\n\n" .
-                               "╰━━━━━━━━━━━━━━━━━━━━━━╯";
-                break;
-                
-            case '.status':
-                $memory = round(memory_get_usage() / 1024 / 1024, 2) . " MB";
-                $php_version = phpversion();
-                
-                $responseText = "System Status: ONLINE 🚀\n" .
-                               "Engine: PHP " . $php_version . "\n" .
-                               "Memory Usage: " . $memory . "\n" .
-                               "Environment: Docker (Free Instance)\n" .
-                               "All background tasks running smoothly.";
                 break;
 
-            case '.ping':
-                $responseText = "Pong! 🏓 Connection is stable.";
+            // 4. أمر فحص الحظر لشخص محدد (u)
+            case 'u':
+                $responseText = "𝐔𝐬𝐞𝐫 𝐬𝐭𝐚𝐭𝐮𝐬: 𝐀𝐜𝐭𝐢𝐯𝐞 / 𝐍𝐨𝐭 𝐁𝐚𝐧𝐧𝐞𝐝.";
                 break;
-                
+
+            // 5. أمر إعادة تسمية البوت (rname)
+            case 'rname':
+                $responseText = "𝐔𝐬𝐚𝐠𝐞: .𝐫𝐧𝐚𝐦𝐞 [𝐍𝐞𝐰 𝐍𝐚𝐦𝐞]";
+                break;
+
+            // 6. أمر عرض الاسم الحالي للبوت (sname)
+            case 'sname':
+                $current_name = file_get_contents($name_file);
+                $responseText = "𝐁𝐨𝐭 𝐂𝐮𝐫𝐫𝐞𝐧𝐭 𝐍𝐚𝐦𝐞: " . $current_name;
+                break;
+
+            // أمر النقطة السريعة (الشاي)
+            case '':
+                if ($userMessage === '.') {
+                    $responseText = "الشاي مشروب العظماء ☕";
+                }
+                break;
+
             default:
+                // معالجة ديناميكية لتغيير الاسم إذا كتب rname ومعه اسم جديد
+                if (strpos($cleanCommand, 'rname ') === 0) {
+                    $newName = substr($userMessage, 7);
+                    file_put_contents($name_file, $newName);
+                    $responseText = "𝐁𝐨𝐭 𝐧𝐚𝐦𝐞 𝐮𝐩𝐝𝐚𝐭𝐞𝐝 𝐭𝐨: " . $newName;
+                }
                 break;
         }
 
-        // 4. Send Response back to LINE API using cURL
+        // إرسال الرد المنسق إلى LINE
         if (!empty($responseText)) {
             $url = 'https://api.line.me/v2/bot/message/reply';
             $data = [
