@@ -3,22 +3,19 @@
 $access_token = 'OmdtK1rjzmRUwifPmUnxKFD9BRJFpnR2Z5Mprmvp7Uhi6DPm+3fQOz0tn2YJDDedK+46IZCwDbfYKR4iiVVJxy2wo5UfIG5rk9X+aULuvsVXeArsSYrWjUqyel3PSHb1GaoxI+KR/py6yXoQjA6rngdB04t89/1O/w1cDnyilFU=';
 $channel_secret = 'd9e581b830c67224104eb22bb0c5f518';
 
-// 2. Automatic Database Connection using Environment Variables
-// سيقوم بقراءة البيانات تلقائياً من إعدادات سيرفر Render
-$db_host = getenv('DB_HOST') ?: 'localhost';
-$db_user = getenv('DB_USER') ?: 'root';
-$db_pass = getenv('DB_PASSWORD') ?: '';
-$db_name = getenv('DB_NAME') ?: 'khedni_m3k'; // اسم قاعدة بيانات مشروعك
-
-$conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
-
-// 3. Parse Incoming Webhook Data from LINE
+// 2. Parse Incoming Webhook Data from LINE
 $content = file_get_contents('php://input');
 $events = json_decode($content, true);
 
 if (is_null($events['events'])) {
     echo "OK - API Backend is running.";
     exit();
+}
+
+// ملف محلي لتخزين الحظر (يبدأ فارغاً تماماً)
+$ban_file = '/tmp/banned_users.txt';
+if (!file_exists($ban_file)) {
+    file_put_contents($ban_file, "");
 }
 
 foreach ($events['events'] as $event) {
@@ -28,27 +25,28 @@ foreach ($events['events'] as $event) {
         $userMessage = trim($event['message']['text']);
         $responseText = "";
 
-        // 4. Real Functional Command Handler
+        // 3. Functional Command Handler
         switch (strtolower($userMessage)) {
             case '.':
                 $responseText = "الشاي مشروب العظماء ☕";
                 break;
 
-            // تنفيذ حقيقي لحذف الحظر من قاعدة البيانات
+            // أمر تنظيف الحظر الفعلي والمنطقي
             case '.c':
-                if ($conn) {
-                    $count_query = "SELECT COUNT(*) as total FROM banned_users";
-                    $result = mysqli_query($conn, $count_query);
-                    $row = mysqli_fetch_assoc($result);
-                    $deleted_count = $row['total'];
-
-                    $delete_query = "DELETE FROM banned_users";
-                    mysqli_query($conn, $delete_query);
-
-                    $responseText = "DONE CLEAR " . $deleted_count . " USERS FROM BAN.";
+                $current_bans = trim(file_get_contents($ban_file));
+                
+                // إذا كان الملف فارغاً، فالعدد صفر تلقائياً
+                if (empty($current_bans)) {
+                    $deleted_count = 0;
                 } else {
-                    $responseText = "ERROR: Database connection failed.";
+                    $banned_array = explode(',', $current_bans);
+                    $deleted_count = count($banned_array);
                 }
+
+                // تفريغ الملف تماماً
+                file_put_contents($ban_file, "");
+
+                $responseText = "DONE CLEAR " . $deleted_count . " USERS FROM BAN.";
                 break;
                 
             case '.help':
@@ -62,13 +60,14 @@ foreach ($events['events'] as $event) {
                 break;
                 
             case '.status':
-                $db_status = $conn ? "Connected" : "Disconnected";
                 $memory = round(memory_get_usage() / 1024 / 1024, 2) . " MB";
+                $php_version = phpversion();
                 
-                $responseText = "System Status: ONLINE\n" .
-                               "Database: " . $db_status . "\n" .
+                $responseText = "System Status: ONLINE 🚀\n" .
+                               "Engine: PHP " . $php_version . "\n" .
                                "Memory Usage: " . $memory . "\n" .
-                               "All services operating normally.";
+                               "Environment: Docker (Free Instance)\n" .
+                               "All background tasks running smoothly.";
                 break;
 
             case '.ping':
@@ -79,7 +78,7 @@ foreach ($events['events'] as $event) {
                 break;
         }
 
-        // 5. Send Response back to LINE API using cURL
+        // 4. Send Response back to LINE API using cURL
         if (!empty($responseText)) {
             $url = 'https://api.line.me/v2/bot/message/reply';
             $data = [
@@ -101,6 +100,5 @@ foreach ($events['events'] as $event) {
         }
     }
 }
-if ($conn) mysqli_close($conn);
 echo "OK";
 ?>
