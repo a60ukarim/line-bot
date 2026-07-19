@@ -37,6 +37,7 @@ foreach ($events['events'] as $event) {
         $baseCommand = "";
         if (strpos($cleanCommand, 'help') === 0) $baseCommand = 'help';
         elseif (strpos($cleanCommand, 'setadmin') === 0) $baseCommand = 'setadmin';
+        elseif (strpos($cleanCommand, 'deladmin') === 0) $baseCommand = 'deladmin';
         elseif (strpos($cleanCommand, 'kickbans') === 0) $baseCommand = 'kickbans';
         elseif (strpos($cleanCommand, 'rname') === 0) $baseCommand = 'rname';
         elseif (strpos($cleanCommand, 'sname') === 0) $baseCommand = 'sname';
@@ -64,6 +65,7 @@ foreach ($events['events'] as $event) {
                                " » 𝐫𝐧𝐚𝐦𝐞\n" .
                                " » 𝐬𝐧𝐚𝐦𝐞\n" .
                                " » 𝐬𝐞𝐭𝐚𝐝𝐦𝐢𝐧\n" .
+                               " » 𝐝𝐞𝐥𝐚𝐝𝐦𝐢𝐧\n" .
                                " » 𝐡𝐞𝐥𝐩";
                 break;
 
@@ -73,7 +75,6 @@ foreach ($events['events'] as $event) {
                     break;
                 }
 
-                // سحب الـ User ID المضمون للمنشن من الهيكل الرسمي لـ LINE API
                 $targetUser = "";
                 if (isset($event['message']['mention']['mentions'][0]['userId'])) {
                     $targetUser = $event['message']['mention']['mentions'][0]['userId'];
@@ -83,7 +84,7 @@ foreach ($events['events'] as $event) {
                     if (!in_array($targetUser, $admin_list)) {
                         $admin_list[] = $targetUser;
                         file_put_contents($admin_file, implode(',', $admin_list));
-                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐑 𝐀𝐒 𝐀doc_𝐀𝐃𝐌𝐈𝐍";
+                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐫 𝐀𝐒 𝐀𝐃𝐌class_𝐈𝐍";
                     } else {
                         $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
                     }
@@ -92,9 +93,39 @@ foreach ($events['events'] as $event) {
                 }
                 break;
 
+            case 'deladmin':
+                if (!in_array($userId, $admin_list)) {
+                    $responseText = "❌ 𝐍𝐨𝐭 𝐀𝐮𝐭𝐡𝐨𝐫𝐢𝐳𝐞𝐝: 𝐎𝐧𝐥𝐲 𝐀𝐝𝐦𝐢𝐧𝐬 𝐜𝐚𝐧 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐜𝐨𝐦𝐦𝐚𝐧𝐝.";
+                    break;
+                }
+
+                $targetUser = "";
+                if (isset($event['message']['mention']['mentions'][0]['userId'])) {
+                    $targetUser = $event['message']['mention']['mentions'][0]['userId'];
+                }
+
+                if (!empty($targetUser)) {
+                    // حظر حذف نفسك بالخطأ من الـ Admins لكي لا تفقد الصلاحية الكاملة
+                    if ($targetUser === $userId) {
+                        $responseText = "❌ 𝐘𝐨𝐮 𝐜𝐚𝐧𝐧𝐨𝐭 𝐫𝐞𝐦𝐨𝐯𝐞 𝐲𝐨𝐮𝐫𝐬𝐞𝐥𝐟 𝐟𝐫𝐨𝐦 𝐚𝐝𝐦𝐢𝐧 𝐥𝐢𝐬𝐭.";
+                        break;
+                    }
+
+                    if (($key = array_search($targetUser, $admin_list)) !== false) {
+                        unset($admin_list[$key]);
+                        file_put_contents($admin_file, implode(',', $admin_list));
+                        $responseText = "🗑️ 𝐃𝐎𝐍𝐄 𝐑𝐄𝐌𝐎𝐕𝐄𝐃 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐑 𝐅𝐑𝐎𝐌 𝐀𝐃𝐌𝐈𝐍𝐒";
+                    } else {
+                        $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐧𝐨𝐭 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
+                    }
+                } else {
+                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐝𝐞𝐥𝐚𝐝𝐦𝐢𝐧 @𝐌𝐞𝐧𝐭𝐢𝐨𝐧";
+                }
+                break;
+
             case 'c':
                 if (!in_array($userId, $admin_list)) {
-                    $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃𝐞𝐧𝐢𝐞ден.";
+                    $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃𝐞𝐧𝐢𝐞𝐝.";
                     break;
                 }
                 $current_bans = trim(file_get_contents($ban_file));
@@ -110,9 +141,9 @@ foreach ($events['events'] as $event) {
                 }
 
                 if (in_array($checkUser, $admin_list)) {
-                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀class_𝐀doc_𝐀𝐃𝐌𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
+                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀𝐃𝐌𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
                 } else {
-                    $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐌𝐞𝐦𝐛𝐞𝐫 / 𝐍𝐨𝐭 𝐁𝐚𝐧𝐧𝐞𝐝.";
+                    $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐌e𝐦𝐛e𝐫 / 𝐍o𝐭 𝐁𝐚𝐧𝐧e𝐝.";
                 }
                 break;
 
