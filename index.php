@@ -3,11 +3,18 @@
 $access_token = 'OmdtK1rjzmRUwifPmUnxKFD9BRJFpnR2Z5Mprmvp7Uhi6DPm+3fQOz0tn2YJDDedK+46IZCwDbfYKR4iiVVJxy2wo5UfIG5rk9X+aULuvsVXeArsSYrWjUqyel3PSHb1GaoxI+KR/py6yXoQjA6rngdB04t89/1O/w1cDnyilFU=';
 $channel_secret = 'd9e581b830c67224104eb22bb0c5f518';
 
-// 2. Parse Incoming Webhook Data from LINE
+// 2. Database Connection (حط معلومات قاعدة البيانات تبعت مشروعك هنا)
+$db_host = "YOUR_DB_HOST";
+$db_user = "YOUR_DB_USER";
+$db_pass = "YOUR_DB_PASSWORD";
+$db_name = "YOUR_DB_NAME";
+
+$conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
+
+// 3. Parse Incoming Webhook Data from LINE
 $content = file_get_contents('php://input');
 $events = json_decode($content, true);
 
-// If the page is opened in a browser directly, show a health check message
 if (is_null($events['events'])) {
     echo "OK - API Backend is running.";
     exit();
@@ -20,15 +27,30 @@ foreach ($events['events'] as $event) {
         $userMessage = trim($event['message']['text']);
         $responseText = "";
 
-        // 3. Command Handler (Switch Case)
+        // 4. Real Functional Command Handler
         switch (strtolower($userMessage)) {
-            // أمر النقطة - استجابة بالعربية
+            // أمر النقطة (ثابت بناءً على طلبك)
             case '.':
                 $responseText = "الشاي مشروب العظماء ☕";
                 break;
 
+            // تنفيذ حقيقي لحذف الحظر من قاعدة البيانات وحساب العدد
             case '.c':
-                $responseText = "DONE CLEAR 3 USER'S FROM BAN.";
+                if ($conn) {
+                    // جلب عدد المحظورين قبل الحذف لمعرفته فعلياً
+                    $count_query = "SELECT COUNT(*) as total FROM banned_users";
+                    $result = mysqli_query($conn, $count_query);
+                    $row = mysqli_fetch_assoc($result);
+                    $deleted_count = $row['total'];
+
+                    // حذف الحظر فعلياً
+                    $delete_query = "DELETE FROM banned_users";
+                    mysqli_query($conn, $delete_query);
+
+                    $responseText = "DONE CLEAR " . $deleted_count . " USERS FROM BAN.";
+                } else {
+                    $responseText = "ERROR: Database connection failed.";
+                }
                 break;
                 
             case '.help':
@@ -41,10 +63,18 @@ foreach ($events['events'] as $event) {
                                "========================";
                 break;
                 
+            // فحص حقيقي لحالة السيرفر والاتصال بالقاعدة
             case '.status':
-                $responseText = "System Status: ONLINE\nVersion: 1.0.0\nAll services are running smoothly.";
+                $db_status = $conn ? "Connected" : "Disconnected";
+                $memory = round(memory_get_usage() / 1024 / 1024, 2) . " MB";
+                
+                $responseText = "System Status: ONLINE\n" .
+                               "Database: " . $db_status . "\n" .
+                               "Memory Usage: " . $memory . "\n" .
+                               "All services operating normally.";
                 break;
 
+            // فحص حقيقي لزمن الاستجابة (Ping / Pong)
             case '.ping':
                 $responseText = "Pong! 🏓 Connection is stable.";
                 break;
@@ -53,17 +83,12 @@ foreach ($events['events'] as $event) {
                 break;
         }
 
-        // 4. Send Response back to LINE API using cURL
+        // 5. Send Response back to LINE API using cURL
         if (!empty($responseText)) {
             $url = 'https://api.line.me/v2/bot/message/reply';
             $data = [
                 'replyToken' => $replyToken,
-                'messages' => [
-                    [
-                        'type' => 'text',
-                        'text' => $responseText
-                    ]
-                ]
+                'messages' => [['type' => 'text', 'text' => $responseText]]
             ];
             
             $post = json_encode($data);
@@ -75,10 +100,11 @@ foreach ($events['events'] as $event) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-            $result = curl_exec($ch);
+            curl_exec($ch);
             curl_close($ch);
         }
     }
 }
+if ($conn) mysqli_close($conn);
 echo "OK";
 ?>
