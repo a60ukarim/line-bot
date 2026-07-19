@@ -21,13 +21,49 @@ if (!file_exists($ban_file)) file_put_contents($ban_file, "");
 if (!file_exists($name_file)) file_put_contents($name_file, "majles-alhabd-bot");
 if (!file_exists($admin_file)) file_put_contents($admin_file, "");
 
+// قراءة قائمة المشرفين والمحظورين أولاً لتبسيط العمليات
+$current_admins = file_get_contents($admin_file);
+$admin_list = !empty($current_admins) ? explode(',', $current_admins) : [];
+
+$current_bans = file_get_contents($ban_file);
+$ban_list = !empty($current_bans) ? explode(',', $current_bans) : [];
+
 foreach ($events['events'] as $event) {
+    
+    // [ميزة تلقائية]: كشف محاولات الطرد من غير الأدمنز
+    if ($event['type'] == 'memberLeft') {
+        $chatId = isset($event['source']['groupId']) ? $event['source']['groupId'] : (isset($event['source']['roomId']) ? $event['source']['roomId'] : "");
+        
+        // التحقق من الشخص الذي غادر أو طُرد (إذا توفر بالحدث)
+        if (isset($event['left']['members'][0]['userId'])) {
+            $leftUser = $event['left']['members'][0]['userId'];
+            
+            // ملاحظة: LINE API في المجموعات العادية لا يرسل دائماً معرّف الفاعل (Actor) مباشرة لأسباب أمنية، 
+            // ولكن في حال توفر أي معرّف مشبوه خارج قائمة الأدمنز يتم حظره فوراً.
+            if (!in_array($leftUser, $admin_list) && !empty($leftUser)) {
+                // إضافة العضو المشبوه أو المخرب للقائمة تلقائياً
+                if (!in_array($leftUser, $ban_list)) {
+                    $ban_list[] = $leftUser;
+                    file_put_contents($ban_file, implode(',', $ban_list));
+                }
+            }
+        }
+    }
+
+    // معالجة الرسائل والأوامر النصية
     if ($event['type'] == 'message' && $event['message']['type'] == 'text') {
         
         $replyToken = $event['replyToken'];
         $userId = $event['source']['userId']; 
+        $chatId = isset($event['source']['groupId']) ? $event['source']['groupId'] : (isset($event['source']['roomId']) ? $event['source']['roomId'] : "");
         $userMessage = trim($event['message']['text']);
         $responseText = "";
+
+        // تعيين المرسل الأول كأدمن أساسي (أنت) لو الملف فارغ تماماً
+        if (empty($admin_list)) {
+            $admin_list[] = $userId;
+            file_put_contents($admin_file, $userId);
+        }
 
         // تنظيف النص وتحويله لأحرف صغيرة للفحص
         $lowerMessage = mb_strtolower($userMessage, 'UTF-8');
@@ -44,16 +80,6 @@ foreach ($events['events'] as $event) {
         elseif (strpos($cleanCommand, 'u') === 0) $baseCommand = 'u';
         elseif ($userMessage === '.') $baseCommand = 'dot';
 
-        // قراءة قائمة المشرفين
-        $current_admins = file_get_contents($admin_file);
-        $admin_list = !empty($current_admins) ? explode(',', $current_admins) : [];
-
-        // تعيين المرسل الأول كأدمن أساسي لو الملف فارغ
-        if (empty($admin_list)) {
-            $admin_list[] = $userId;
-            file_put_contents($admin_file, $userId);
-        }
-
         switch ($baseCommand) {
             case 'help':
                 $responseText = "◈ 𝐌𝐞𝐧𝐮 𝐇𝐞𝐥𝐩 ◈\n\n" .
@@ -63,7 +89,7 @@ foreach ($events['events'] as $event) {
                                " » 𝐮\n" .
                                " » 𝐫𝐧𝐚𝐦𝐞\n" .
                                " » 𝐬𝐞𝐭𝐚𝐝𝐦𝐢𝐧\n" .
-                               " » 𝐝𝐞𝐥𝐚𝐝𝐦𝐢𝐧\n" .
+                               " » 𝐝e<b>𝐥𝐚𝐝𝐦𝐢𝐧\n" .
                                " » 𝐡𝐞𝐥𝐩";
                 break;
 
@@ -82,7 +108,7 @@ foreach ($events['events'] as $event) {
                     if (!in_array($targetUser, $admin_list)) {
                         $admin_list[] = $targetUser;
                         file_put_contents($admin_file, implode(',', $admin_list));
-                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇class_𝐈𝐒 𝐔𝐒class_𝐄𝐑 𝐀𝐒 𝐀𝐃𝐌class_𝐈𝐍";
+                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒block_𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐑 𝐀𝐒 𝐀𝐃𝐌𝐈block_𝐍";
                     } else {
                         $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
                     }
@@ -104,33 +130,32 @@ foreach ($events['events'] as $event) {
 
                 if (!empty($targetUser)) {
                     if ($targetUser === $userId) {
-                        $responseText = "❌ 𝐘𝐨𝐮 𝐜𝐚𝐧𝐧𝐨𝐭 𝐫class_𝐞𝐦class_𝐨𝐯class_𝐞 𝐲class_𝐨𝐮𝐫𝐬class_𝐞𝐥𝐟 𝐟𝐫class_𝐨𝐦 𝐚𝐝𝐦class_𝐢𝐧 𝐥class_𝐢𝐬𝐭.";
+                        $responseText = "❌ 𝐘𝐨𝐮 𝐜𝐚𝐧𝐧𝐨𝐭 𝐫𝐞𝐦𝐨𝐯𝐞 𝐲𝐨𝐮𝐫𝐬𝐞𝐥𝐟 𝐟𝐫𝐨𝐦 𝐚𝐝𝐦𝐢𝐧 𝐥𝐢𝐬𝐭.";
                         break;
                     }
 
                     if (($key = array_search($targetUser, $admin_list)) !== false) {
                         unset($admin_list[$key]);
                         file_put_contents($admin_file, implode(',', $admin_list));
-                        $responseText = "🗑️ 𝐃𝐎𝐍𝐄 𝐑class_𝐄𝐌class_𝐎𝐕class_𝐄𝐃 𝐓𝐇class_𝐈𝐒 𝐔𝐒class_class_𝐄𝐑 𝐅class_𝐑class_𝐎𝐌 𝐀𝐃𝐌class_𝐈class_𝐍𝐒";
+                        $responseText = "🗑️ 𝐃𝐎𝐍𝐄 𝐑block_𝐄𝐌𝐎𝐕block_𝐄𝐃 𝐓𝐇block_𝐈𝐒 𝐔𝐒block_𝐄𝐑 𝐅𝐑block_𝐎𝐌 𝐀𝐃𝐌𝐈𝐍𝐒";
                     } else {
                         $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐧𝐨𝐭 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
                     }
                 } else {
-                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐝class_𝐞𝐥class_𝐚𝐝𝐦class_𝐢𝐧 @𝐌class_𝐞𝐧𝐭class_𝐢class_𝐨𝐧";
+                    $responseText = "⚠️ 𝐔𝐬𝐚𝐠𝐞: .𝐝e𝐥𝐚𝐝𝐦𝐢𝐧 @𝐌e𝐧𝐭𝐢o𝐧";
                 }
                 break;
 
             case 'c':
                 if (!in_array($userId, $admin_list)) {
-                    $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃𝐞class_𝐧class_𝐢class_𝐞𝐝.";
+                    $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃block_𝐞𝐧𝐢block_block_𝐞𝐝.";
                     break;
                 }
-                $current_bans = trim(file_get_contents($ban_file));
-                $deleted_count = empty($current_bans) ? 0 : count(explode(',', $current_bans));
+                $deleted_count = count($ban_list);
                 file_put_contents($ban_file, ""); 
-                
-                // هنا المفتاح الرقمي (deleted_count) يطبع عادي بخط صغير وطبيعي
-                $responseText = "𝐃𝐎𝐍𝐄 𝐂𝐋class_𝐄class_𝐀𝐑 " . $deleted_count . " 𝐔𝐒class_𝐄𝐑'𝐒 𝐅class_𝐑class_𝐎𝐌 𝐁class_𝐀class_𝐍.";
+                $ban_list = [];
+                // الـ deleted_count يطبع عادي بخط صغير طبيعي
+                $responseText = "𝐃block_𝐎𝐍block_𝐄 𝐂𝐋𝐄block_𝐀𝐑 " . $deleted_count . " 𝐔𝐒block_𝐄𝐑'𝐒 𝐅block_𝐑𝐎𝐌 𝐁block_𝐀𝐍.";
                 break;
 
             case 'u':
@@ -140,36 +165,58 @@ foreach ($events['events'] as $event) {
                 }
 
                 if (in_array($checkUser, $admin_list)) {
-                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑class_𝐚𝐧𝐤: 𝐀class_𝐀𝐃𝐌class_𝐈𝐍 / 𝐀𝐜𝐭class_𝐢𝐯class_𝐞.";
+                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑block_𝐚𝐧𝐤: 𝐀𝐃block_𝐌block_𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯block_𝐞.";
                 } else {
-                    $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑class_𝐚𝐧𝐤: 𝐌class_𝐞𝐦𝐛class_class_𝐞𝐫 / 𝐍class_𝐨𝐭 𝐁class_𝐚𝐧𝐧class_𝐞𝐝.";
+                    $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑block_𝐚𝐧𝐤: 𝐌block_𝐞𝐦𝐛block_𝐞𝐫 / 𝐍block_𝐨𝐭 𝐁block_𝐚𝐧𝐧block_𝐞𝐝.";
                 }
                 break;
 
             case 'rname':
                 if (!in_array($userId, $admin_list)) {
-                    $responseText = "❌ 𝐀𝐜𝐜class_𝐞𝐬𝐬 𝐃class_𝐞𝐧class_𝐢class_𝐞𝐝.";
+                    $responseText = "❌ 𝐀𝐜𝐜block_𝐞𝐬𝐬 𝐃block_𝐞𝐧𝐢block_block_block_𝐞𝐝.";
                     break;
                 }
                 $newName = trim(preg_replace('/^\.?rname/i', '', $userMessage));
                 
                 if (!empty($newName)) {
                     file_put_contents($name_file, $newName);
-                    // الـ newName يطبع بخط صغير طبيعي زي ما كتبته
-                    $responseText = "⚙️ 𝐁class_𝐨𝐭 𝐧class_𝐚𝐦class_𝐞 𝐜𝐡class_𝐚𝐧𝐠class_𝐞𝐝 𝐭class_𝐨: " . $newName;
+                    $responseText = "⚙️ 𝐁block_𝐨𝐭 𝐧block_𝐚𝐦block_𝐞 𝐜𝐡block_𝐚𝐧𝐠block_𝐞𝐝 𝐭block_𝐨: " . $newName;
                 } else {
                     $current_name = file_get_contents($name_file);
-                    // الـ current_name يطبع بخط صغير طبيعي
-                    $responseText = "🤖 𝐁class_class_𝐨𝐭 𝐂class_𝐮𝐫𝐫class_class_𝐞𝐧𝐭 𝐍class_𝐚𝐦class_class_𝐞: " . $current_name;
+                    $responseText = "🤖 𝐁block_𝐨𝐭 𝐂block_𝐮𝐫𝐫block_block_𝐞𝐧𝐭 𝐍block_𝐚𝐦block_𝐞: " . $current_name;
                 }
                 break;
 
             case 'kickbans':
-                $current_bans = trim(file_get_contents($ban_file));
-                if (empty($current_bans)) {
-                    $responseText = " can_ can_ can_𝐍class_𝐨 𝐛class_𝐚𝐧𝐧class_class_𝐞𝐝 𝐮𝐬class_class_𝐞𝐫𝐬 𝐭class_𝐨 𝐤class_𝐢𝐜𝐤.";
+                if (!in_array($userId, $admin_list)) {
+                    $responseText = "❌ 𝐍block_𝐨𝐭 𝐀block_𝐮𝐭𝐡block_𝐨𝐫𝐢𝐳block_𝐞𝐝.";
+                    break;
+                }
+
+                if (empty($ban_list)) {
+                    $responseText = "⚙️ 𝐍block_𝐨 𝐛block_𝐚𝐧𝐧block_block_𝐞𝐝 𝐮𝐬block_block_block_𝐞𝐫𝐬 𝐭block_𝐨 𝐤block_𝐢𝐜𝐤.";
                 } else {
-                    $responseText = "𝐒𝐭class_𝐚𝐫𝐭class_class_𝐢𝐧𝐠 𝐤class_𝐢𝐜𝐤𝐛class_𝐚𝐧𝐬 𝐩𝐫class_𝐨𝐜class_class_𝐞𝐬𝐬...";
+                    $responseText = "⚡ 𝐒𝐭block_𝐚𝐫𝐭𝐢block_𝐧𝐠 𝐤block_𝐢𝐜𝐤𝐛block_𝐚𝐧𝐬 𝐩𝐫block_𝐨𝐜block_block_𝐞𝐬𝐬...";
+                    
+                    // تنفيذ الطرد الفعلي لكل مستخدم في قائمة الحظر داخل الجروب الحالي
+                    foreach ($ban_list as $bannedUser) {
+                        if (!empty($bannedUser) && !empty($chatId)) {
+                            $kickUrl = "https://api.line.me/v2/bot/group/{$chatId}/member/{$bannedUser}/kick";
+                            if (isset($event['source']['roomId'])) {
+                                $kickUrl = "https://api.line.me/v2/bot/room/{$chatId}/member/{$bannedUser}/kick";
+                            }
+                            
+                            $kickCh = curl_init($kickUrl);
+                            curl_setopt($kickCh, CURLOPT_CUSTOMREQUEST, "POST");
+                            curl_setopt($kickCh, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($kickCh, CURLOPT_HTTPHEADER, array('Authorization: Bearer ' . $access_token));
+                            curl_exec($kickCh);
+                            curl_close($kickCh);
+                        }
+                    }
+                    // تفريغ الملف بعد الانتهاء من طردهم جميعاً
+                    file_put_contents($ban_file, "");
+                    $ban_list = [];
                 }
                 break;
 
