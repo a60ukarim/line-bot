@@ -3,11 +3,12 @@
 $access_token = 'OmdtK1rjzmRUwifPmUnxKFD9BRJFpnR2Z5Mprmvp7Uhi6DPm+3fQOz0tn2YJDDedK+46IZCwDbfYKR4iiVVJxy2wo5UfIG5rk9X+aULuvsVXeArsSYrWjUqyel3PSHb1GaoxI+KR/py6yXoQjA6rngdB04t89/1O/w1cDnyilFU=';
 $channel_secret = 'd9e581b830c67224104eb22bb0c5f518';
 
-// 2. Database Connection (حط معلومات قاعدة البيانات تبعت مشروعك هنا)
-$db_host = "YOUR_DB_HOST";
-$db_user = "YOUR_DB_USER";
-$db_pass = "YOUR_DB_PASSWORD";
-$db_name = "YOUR_DB_NAME";
+// 2. Automatic Database Connection using Environment Variables
+// سيقوم بقراءة البيانات تلقائياً من إعدادات سيرفر Render
+$db_host = getenv('DB_HOST') ?: 'localhost';
+$db_user = getenv('DB_USER') ?: 'root';
+$db_pass = getenv('DB_PASSWORD') ?: '';
+$db_name = getenv('DB_NAME') ?: 'khedni_m3k'; // اسم قاعدة بيانات مشروعك
 
 $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name);
 
@@ -29,21 +30,18 @@ foreach ($events['events'] as $event) {
 
         // 4. Real Functional Command Handler
         switch (strtolower($userMessage)) {
-            // أمر النقطة (ثابت بناءً على طلبك)
             case '.':
                 $responseText = "الشاي مشروب العظماء ☕";
                 break;
 
-            // تنفيذ حقيقي لحذف الحظر من قاعدة البيانات وحساب العدد
+            // تنفيذ حقيقي لحذف الحظر من قاعدة البيانات
             case '.c':
                 if ($conn) {
-                    // جلب عدد المحظورين قبل الحذف لمعرفته فعلياً
                     $count_query = "SELECT COUNT(*) as total FROM banned_users";
                     $result = mysqli_query($conn, $count_query);
                     $row = mysqli_fetch_assoc($result);
                     $deleted_count = $row['total'];
 
-                    // حذف الحظر فعلياً
                     $delete_query = "DELETE FROM banned_users";
                     mysqli_query($conn, $delete_query);
 
@@ -63,7 +61,6 @@ foreach ($events['events'] as $event) {
                                "========================";
                 break;
                 
-            // فحص حقيقي لحالة السيرفر والاتصال بالقاعدة
             case '.status':
                 $db_status = $conn ? "Connected" : "Disconnected";
                 $memory = round(memory_get_usage() / 1024 / 1024, 2) . " MB";
@@ -74,7 +71,6 @@ foreach ($events['events'] as $event) {
                                "All services operating normally.";
                 break;
 
-            // فحص حقيقي لزمن الاستجابة (Ping / Pong)
             case '.ping':
                 $responseText = "Pong! 🏓 Connection is stable.";
                 break;
