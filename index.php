@@ -29,11 +29,11 @@ foreach ($events['events'] as $event) {
         $userMessage = trim($event['message']['text']);
         $responseText = "";
 
-        // تنظيف الرسالة وتحويلها لأحرف صغيرة للفحص
+        // تنظيف النص وتحويله لأحرف صغيرة
         $lowerMessage = mb_strtolower($userMessage, 'UTF-8');
         $cleanCommand = ltrim($lowerMessage, '.');
 
-        // تحديد الأمر بناءً على بداية الكلمة
+        // تحديد الأمر بشكل مرن
         $baseCommand = "";
         if (strpos($cleanCommand, 'help') === 0) $baseCommand = 'help';
         elseif (strpos($cleanCommand, 'setadmin') === 0) $baseCommand = 'setadmin';
@@ -48,7 +48,7 @@ foreach ($events['events'] as $event) {
         $current_admins = file_get_contents($admin_file);
         $admin_list = !empty($current_admins) ? explode(',', $current_admins) : [];
 
-        // إذا كان الملف فارغاً، تعيين أول مستخدم كأدمن أساسي تلقائياً
+        // تعيين المرسل الأول كأدمن أساسي لو الملف فارغ
         if (empty($admin_list)) {
             $admin_list[] = $userId;
             file_put_contents($admin_file, $userId);
@@ -68,21 +68,15 @@ foreach ($events['events'] as $event) {
                 break;
 
             case 'setadmin':
-                // التحقق من صلاحية المستخدم الحالي
                 if (!in_array($userId, $admin_list)) {
                     $responseText = "❌ 𝐍𝐨𝐭 𝐀𝐮𝐭𝐡𝐨𝐫𝐢𝐳𝐞𝐝: 𝐎𝐧𝐥𝐲 𝐀𝐝𝐦𝐢𝐧𝐬 𝐜𝐚𝐧 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐜𝐨𝐦𝐦𝐚𝐧𝐝.";
                     break;
                 }
 
-                // سحب الـ User ID للشخص الممشن بشكل مرن وآمن
+                // سحب الـ User ID المضمون للمنشن من الهيكل الصحيح لـ LINE API
                 $targetUser = "";
                 if (isset($event['message']['mention']['mentions']) && is_array($event['message']['mention']['mentions'])) {
-                    foreach ($event['message']['mention']['mentions'] as $mention) {
-                        if (isset($mention['userId'])) {
-                            $targetUser = $mention['userId'];
-                            break; // نأخذ أول منشن صح
-                        }
-                    }
+                    $targetUser = $event['message']['mention']['mentions'][0]['userId'];
                 }
 
                 if (!empty($targetUser)) {
@@ -112,16 +106,11 @@ foreach ($events['events'] as $event) {
             case 'u':
                 $checkUser = $userId;
                 if (isset($event['message']['mention']['mentions']) && is_array($event['message']['mention']['mentions'])) {
-                    foreach ($event['message']['mention']['mentions'] as $mention) {
-                        if (isset($mention['userId'])) {
-                            $checkUser = $mention['userId'];
-                            break;
-                        }
-                    }
+                    $checkUser = $event['message']['mention']['mentions'][0]['userId'];
                 }
 
                 if (in_array($checkUser, $admin_list)) {
-                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀class_𝐀𝐃𝐌class_𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
+                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀𝐃𝐌𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
                 } else {
                     $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐌𝐞𝐦𝐛𝐞𝐫 / 𝐍𝐨𝐭 𝐁𝐚𝐧𝐧𝐞𝐝.";
                 }
@@ -134,7 +123,7 @@ foreach ($events['events'] as $event) {
 
             case 'rname':
                 if (!in_array($userId, $admin_list)) {
-                    $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃니ed.";
+                    $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃𝐞𝐧𝐢𝐞𝐝.";
                     break;
                 }
                 $newName = trim(preg_replace('/^\.?rname/i', '', $userMessage));
@@ -149,7 +138,7 @@ foreach ($events['events'] as $event) {
             case 'kickbans':
                 $current_bans = trim(file_get_contents($ban_file));
                 if (empty($current_bans)) {
-                    $responseText = "𝐍𝐨 𝐛𝐚𝐧𝐧𝐞𝐝 𝐮𝐬𝐞𝐫𝐬 𝐭𝐨 𝐤𝐢𝐜𝐤.";
+                    $responseText = "𝐍𝐨 𝐛𝐚𝐧𝐧𝐞𝐝 👑 𝐮𝐬𝐞𝐫𝐬 𝐭𝐨 𝐤𝐢𝐜𝐤.";
                 } else {
                     $responseText = "𝐒𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐤𝐢𝐜𝐤𝐛𝐚𝐧𝐬 𝐩𝐫𝐨𝐜𝐞𝐬𝐬...";
                 }
@@ -160,7 +149,7 @@ foreach ($events['events'] as $event) {
                 break;
         }
 
-        // إرسال الرد
+        // إرسال الرد عبر سكريبت cURL لشيرفر LINE
         if (!empty($responseText)) {
             $url = 'https://api.line.me/v2/bot/message/reply';
             $data = [
