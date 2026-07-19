@@ -20,27 +20,32 @@ foreach ($events['events'] as $event) {
         $userMessage = trim($event['message']['text']);
         $responseText = "";
 
-        // 3. Command Handler (Switch Case)
+        // 3. Command Handler (Switch Case) - English
         switch (strtolower($userMessage)) {
-            // إذا أرسل نقطة فقط
             case '.':
-                $responseText = "الشاي مشروب العظماء ☕";
+                $responseText = "Tea is the drink of greats ☕";
                 break;
 
-            // إذا أرسل أمر الحظر المختصر
             case '.c':
                 $responseText = "DONE CLEAR 3 USER'S FROM BAN.";
                 break;
                 
             case '.help':
-                $responseText = "=== أوامر التحكم ===\n" .
-                               ".c - لتنظيف قائمة الحظر\n" .
-                               ". - مشروب العظماء\n" .
-                               ".status - فحص حالة السيرفر";
+                $responseText = "=== Available Commands ===\n" .
+                               ".help - Show this commands list\n" .
+                               ".status - Check system status\n" .
+                               ".ping - Test bot responsiveness\n" .
+                               ".c - Clear ban list\n" .
+                               ". - Dot command shortcut\n" .
+                               "========================";
                 break;
                 
             case '.status':
-                $responseText = "وضع النظام: أونلاين وجاهز للهبد 🚀\nالنسخة: 1.0.0\nكل الأمور ماشية لوز اللوز.";
+                $responseText = "System Status: ONLINE\nVersion: 1.0.0\nAll services are running smoothly.";
+                break;
+
+            case '.ping':
+                $responseText = "Pong! 🏓 Connection is stable.";
                 break;
                 
             default:
@@ -64,7 +69,7 @@ foreach ($events['events'] as $event) {
             $headers = array('Content-Type: application/json', 'Authorization: Bearer ' . $access_token);
 
             $ch = curl_init($url);
-            $curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
