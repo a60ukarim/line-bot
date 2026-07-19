@@ -12,7 +12,7 @@ if (is_null($events['events'])) {
     exit();
 }
 
-// ملف محلي لتخزين الحظر (يبدأ فارغاً تماماً)
+// ملف محلي لتخزين الحظر
 $ban_file = '/tmp/banned_users.txt';
 if (!file_exists($ban_file)) {
     file_put_contents($ban_file, "");
@@ -31,32 +31,32 @@ foreach ($events['events'] as $event) {
                 $responseText = "الشاي مشروب العظماء ☕";
                 break;
 
-            // أمر تنظيف الحظر الفعلي والمنطقي
             case '.c':
                 $current_bans = trim(file_get_contents($ban_file));
-                
-                // إذا كان الملف فارغاً، فالعدد صفر تلقائياً
                 if (empty($current_bans)) {
                     $deleted_count = 0;
                 } else {
                     $banned_array = explode(',', $current_bans);
                     $deleted_count = count($banned_array);
                 }
-
-                // تفريغ الملف تماماً
                 file_put_contents($ban_file, "");
-
                 $responseText = "DONE CLEAR " . $deleted_count . " USERS FROM BAN.";
                 break;
                 
+            // القائمة الفخمة الجديدة بخط Unicode مزخرف ومميز
             case '.help':
-                $responseText = "=== Available Commands ===\n" .
-                               ".help - Show this commands list\n" .
-                               ".status - Check system status\n" .
-                               ".ping - Test bot responsiveness\n" .
-                               ".c - Clear ban list\n" .
-                               ". - Dot command shortcut\n" .
-                               "========================";
+                $responseText = "╭━━━  𝔖𝔜𝔖𝔗𝔈𝔐 ℭ𝔒𝔐𝔐𝔒𝔑𝔇𝔖  ━━━╮\n\n" .
+                               " 📌  [ .help ]\n" .
+                               " ╰─▸ 𝘚𝘩𝘰𝘸 𝘵𝘩𝘪𝘴 𝘱𝘳𝘦𝘮𝘪𝘶𝘮 𝘮𝘦𝘯𝘶.\n\n" .
+                               " ⚡  [ .status ]\n" .
+                               " ╰─▸ 𝘊𝘩𝘦𝘤𝘬 𝘳𝘦𝘢𝘭-𝘵𝘪𝘮𝘦 𝘴𝘺𝘴𝘵𝘦𝘮 𝘩𝘦𝘢𝘭𝘵𝘩.\n\n" .
+                               " 📡  [ .ping ]\n" .
+                               " ╰─▸ 𝘛𝘦𝘴𝘵 𝘭𝘢𝘵𝘦𝘯𝘤𝘺 & 𝘳𝘦𝘴𝘱𝘰𝘯𝘴𝘪𝘷𝘦𝘯𝘦𝘴𝘴.\n\n" .
+                               " 🛡️  [ .c ]\n" .
+                               " ╰─▸ 𝘞𝘪𝘱𝘦 𝘢𝘭𝘭 𝘣𝘢𝘯𝘯𝘦𝘥 𝘶𝘴𝘦𝘳𝘴 𝘪𝘯𝘴𝘵𝘢𝘯𝘵𝘭𝘺.\n\n" .
+                               " ☕  [ . ]\n" .
+                               " ╰─▸ 𝘛𝘩𝘦 𝘭𝘦𝘨𝘦𝘯𝘥𝘢𝘳𝘺 𝘥𝘰𝘵 𝘴𝘩𝘰𝘳𝘵𝘤𝘶𝘵.\n\n" .
+                               "╰━━━━━━━━━━━━━━━━━━━━━━╯";
                 break;
                 
             case '.status':
