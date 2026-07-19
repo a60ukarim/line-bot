@@ -20,10 +20,11 @@ foreach ($events['events'] as $event) {
         $userMessage = trim($event['message']['text']);
         $responseText = "";
 
-        // 3. Command Handler (Switch Case) - English
+        // 3. Command Handler (Switch Case)
         switch (strtolower($userMessage)) {
+            // أمر النقطة - استجابة بالعربية
             case '.':
-                $responseText = "Tea is the drink of greats ☕";
+                $responseText = "الشاي مشروب العظماء ☕";
                 break;
 
             case '.c':
