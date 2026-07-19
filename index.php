@@ -29,11 +29,11 @@ foreach ($events['events'] as $event) {
         $userMessage = trim($event['message']['text']);
         $responseText = "";
 
-        // تنظيف النص وتحويله لأحرف صغيرة
+        // تنظيف النص وتحويله لأحرف صغيرة للفحص
         $lowerMessage = mb_strtolower($userMessage, 'UTF-8');
         $cleanCommand = ltrim($lowerMessage, '.');
 
-        // تحديد الأمر بشكل مرن
+        // تحديد الأمر بشكل مرن ودقيق
         $baseCommand = "";
         if (strpos($cleanCommand, 'help') === 0) $baseCommand = 'help';
         elseif (strpos($cleanCommand, 'setadmin') === 0) $baseCommand = 'setadmin';
@@ -73,9 +73,9 @@ foreach ($events['events'] as $event) {
                     break;
                 }
 
-                // سحب الـ User ID المضمون للمنشن من الهيكل الصحيح لـ LINE API
+                // سحب الـ User ID المضمون للمنشن من الهيكل الرسمي لـ LINE API
                 $targetUser = "";
-                if (isset($event['message']['mention']['mentions']) && is_array($event['message']['mention']['mentions'])) {
+                if (isset($event['message']['mention']['mentions'][0]['userId'])) {
                     $targetUser = $event['message']['mention']['mentions'][0]['userId'];
                 }
 
@@ -83,7 +83,7 @@ foreach ($events['events'] as $event) {
                     if (!in_array($targetUser, $admin_list)) {
                         $admin_list[] = $targetUser;
                         file_put_contents($admin_file, implode(',', $admin_list));
-                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐑 𝐀𝐒 𝐀𝐃𝐌𝐈𝐍";
+                        $responseText = "👑 𝐃𝐎𝐍𝐄 𝐒𝐄𝐓 𝐓𝐇𝐈𝐒 𝐔𝐒𝐄𝐑 𝐀𝐒 𝐀doc_𝐀𝐃𝐌𝐈𝐍";
                     } else {
                         $responseText = "𝐓𝐡𝐢𝐬 𝐮𝐬𝐞𝐫 𝐢𝐬 𝐚𝐥𝐫𝐞𝐚𝐝𝐲 𝐚𝐧 𝐚𝐝𝐦𝐢𝐧.";
                     }
@@ -94,7 +94,7 @@ foreach ($events['events'] as $event) {
 
             case 'c':
                 if (!in_array($userId, $admin_list)) {
-                    $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃𝐞𝐧𝐢𝐞𝐝.";
+                    $responseText = "❌ 𝐀𝐜𝐜𝐞𝐬𝐬 𝐃𝐞𝐧𝐢𝐞ден.";
                     break;
                 }
                 $current_bans = trim(file_get_contents($ban_file));
@@ -105,12 +105,12 @@ foreach ($events['events'] as $event) {
 
             case 'u':
                 $checkUser = $userId;
-                if (isset($event['message']['mention']['mentions']) && is_array($event['message']['mention']['mentions'])) {
+                if (isset($event['message']['mention']['mentions'][0]['userId'])) {
                     $checkUser = $event['message']['mention']['mentions'][0]['userId'];
                 }
 
                 if (in_array($checkUser, $admin_list)) {
-                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀𝐃𝐌𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
+                    $responseText = "🛡️ 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐀class_𝐀doc_𝐀𝐃𝐌𝐈𝐍 / 𝐀𝐜𝐭𝐢𝐯𝐞.";
                 } else {
                     $responseText = "👤 𝐔𝐬𝐞𝐫 𝐑𝐚𝐧𝐤: 𝐌𝐞𝐦𝐛𝐞𝐫 / 𝐍𝐨𝐭 𝐁𝐚𝐧𝐧𝐞𝐝.";
                 }
@@ -138,7 +138,7 @@ foreach ($events['events'] as $event) {
             case 'kickbans':
                 $current_bans = trim(file_get_contents($ban_file));
                 if (empty($current_bans)) {
-                    $responseText = "𝐍𝐨 𝐛𝐚𝐧𝐧𝐞𝐝 👑 𝐮𝐬𝐞𝐫𝐬 𝐭𝐨 𝐤𝐢𝐜𝐤.";
+                    $responseText = "𝐍𝐨 𝐛𝐚𝐧𝐧𝐞𝐝 𝐮𝐬𝐞𝐫𝐬 𝐭𝐨 𝐤𝐢𝐜𝐤.";
                 } else {
                     $responseText = "𝐒𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐤𝐢𝐜𝐤𝐛𝐚𝐧𝐬 𝐩𝐫𝐨𝐜𝐞𝐬𝐬...";
                 }
@@ -149,7 +149,7 @@ foreach ($events['events'] as $event) {
                 break;
         }
 
-        // إرسال الرد عبر سكريبت cURL لشيرفر LINE
+        // إرسال الرد
         if (!empty($responseText)) {
             $url = 'https://api.line.me/v2/bot/message/reply';
             $data = [
